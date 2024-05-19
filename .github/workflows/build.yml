@@ -1,0 +1,44 @@
+name: Build And Zip Extension
+
+on:
+  pull_request:
+
+jobs:
+    build:
+        permissions:
+          contents: write
+          pull-requests: write
+
+        runs-on: ubuntu-latest
+
+        strategy:
+            matrix:
+                node-version: [16.x]
+                # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
+        steps:
+            - uses: actions/checkout@v2
+
+            - name: Install zip
+              uses: montudor/action-zip@v1
+
+            - name: Use Node.js ${{ matrix.node-version }}
+              uses: actions/setup-node@v2
+              with:
+                  node-version: ${{ matrix.node-version }}
+
+            - name: Build extension
+              working-directory: ./client
+              run: |
+                  yarn
+                  yarn build-extension-mainnet
+
+            - name: Zip extension
+              working-directory: ./client/build_extension
+              run: zip -qq -r chrome-extension.zip .
+
+            - name: Upload Artifact
+              uses: actions/upload-artifact@v3
+              with:
+                name: extension-artifact
+                path: ./client/build_extension/chrome-extension.zip
